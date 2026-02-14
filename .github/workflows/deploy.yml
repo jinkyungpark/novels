@@ -73,8 +73,8 @@ jobs:
           fi
           cp "$JAR_PATH" artifacts/backend/app.jar
 
-          cp novels/backend/Dockerfile artifacts/backend/Dockerfile
-          cp novels/backend/docker-compose.yml artifacts/backend/docker-compose.yml
+          cp backend/novels/Dockerfile artifacts/backend/Dockerfile
+          cp backend/novels/docker-compose.yml artifacts/backend/docker-compose.yml
 
       # ---------- SSH + Rsync ----------
       - name: Install rsync & ssh
