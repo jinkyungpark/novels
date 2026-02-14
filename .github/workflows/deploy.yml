@@ -79,6 +79,8 @@ jobs:
       # ---------- SSH + Rsync ----------
 
       - name: Setup SSH
+        env:
+          SERVER_SSH_RSA_B64: ${{ secrets.SERVER_SSH_RSA_B64 }}
         run: |
           sudo apt-get update && sudo apt-get install -y openssh-client
           mkdir -p ~/.ssh
