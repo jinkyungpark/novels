@@ -82,19 +82,15 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_RSA }}
 
-      # 호스트 키 등록록
+      # 호스트 키 등록
       - name: Add Remote Host to Known Hosts
         run: |
-          # 1. .ssh 디렉토리가 없으면 생성 (이미 있으면 무시)
           mkdir -p ~/.ssh
 
-          # 2. 알려진 호스트 파일이 없으면 생성 및 권한 설정
           touch ~/.ssh/known_hosts
 
-          # 3. ssh-keyscan 실행
           ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-          # 4. 권한 보안 설정 (권한이 너무 넓으면 SSH가 거부할 수 있음)
           chmod 600 ~/.ssh/known_hosts
           chmod 700 ~/.ssh
 
