@@ -80,7 +80,8 @@ jobs:
 
       - name: Setup SSH
         env:
-          SERVER_SSH_RSA_B64: ${{ secrets.SERVER_SSH_RSA_B64 }}
+          HOST: ${{ secrets.SERVER_HOST }}
+          PORT: ${{ secrets.SERVER_PORT }}
         run: |
           sudo apt-get update && sudo apt-get install -y openssh-client
           mkdir -p ~/.ssh
@@ -107,9 +108,10 @@ jobs:
 
       - name: Test SSH login
         run: |
-          ssh -i ~/.ssh/id_rsa -p ${{ secrets.SERVER_PORT }} \
+          ssh -p ${{ secrets.SERVER_PORT }} \
             -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK"
+            -i ~/.ssh/id_rsa \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK && whoami && hostname"
 
       - name: Install rsync & ssh
         run: sudo apt-get update && sudo apt-get install -y rsync openssh-client
