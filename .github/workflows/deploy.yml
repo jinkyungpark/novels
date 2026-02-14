@@ -111,7 +111,7 @@ jobs:
           rsync -avz --delete \
             -e "ssh -p 22 -i private_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
             artifacts/frontend/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_FRONTEND_DIR }}/
+            deploy@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_FRONTEND_DIR }}/
 
           # 3. 임시 키 삭제
           rm private_key
