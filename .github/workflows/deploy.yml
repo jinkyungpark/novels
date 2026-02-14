@@ -82,8 +82,16 @@ jobs:
         run: |
           sudo apt-get update && sudo apt-get install -y openssh-client
           mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.SERVER_SSH_RSA }}" > ~/.ssh/id_rsa
+
+          # 개인키 저장
+          printf '%s' "$SERVER_SSH_RSA" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
+
+          # ✅ 여기서 실패하면 "키 저장/형식" 문제
+          ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null
+
+          # 호스트키 등록 (실패해도 원인 보기 위해 먼저 echo)
+          echo "Scanning host key..."
           ssh-keyscan -p ${{ secrets.SERVER_PORT }} -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
       - name: Test SSH login
