@@ -102,19 +102,19 @@ jobs:
         env:
           DEPLOY_FRONTEND_DIR: ${{ secrets.DEPLOY_FRONTEND_DIR }}
         run: |
-          # 1. 경로 정리 (공백 및 줄바꿈 제거)
-          CLEAN_DIR=$(echo "$DEPLOY_FRONTEND_DIR" | tr -d '\r\n' | sed 's|/*$||')
+          # 1. 임시 키 파일 생성
+          echo "$SSH_PRIVATE_KEY" > private_key
+          chmod 600 private_key
 
-          if [ -z "$CLEAN_DIR" ] || [ "$CLEAN_DIR" = "/" ]; then
-            echo "ERROR: DEPLOY_FRONTEND_DIR is empty or root."
-            exit 1
-          fi
-
-          # 2. rsync 실행 (따옴표와 백슬래시 주의)
+          # 2. rsync 실행 (옵션에 -i private_key 직접 지정)
+          # StrictHostKeyChecking=no를 통해 known_hosts 문제 원천 차단
           rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SERVER_PORT }} -o StrictHostKeyChecking=yes" \
+            -e "ssh -p 22 -i private_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
             artifacts/frontend/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"$CLEAN_DIR/"
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_FRONTEND_DIR }}/
+
+          # 3. 임시 키 삭제
+          rm private_key
 
       - name: Deploy backend (Docker context)
         run: |
