@@ -77,6 +77,12 @@ jobs:
           cp backend/novels/docker-compose.yml artifacts/backend/docker-compose.yml
 
       # ---------- SSH + Rsync ----------
+      - name: Test SSH login
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SERVER_PORT }} \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK && whoami && hostname"
+
       - name: Install rsync & ssh
         run: sudo apt-get update && sudo apt-get install -y rsync openssh-client
 
