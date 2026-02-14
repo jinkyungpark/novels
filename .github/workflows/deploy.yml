@@ -86,19 +86,33 @@ jobs:
           echo "${{ secrets.SERVER_SSH_B64 }}" | base64 -d > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          # 키가 정상인지 검증 
+          # 키가 정상인지 여기서 검증
           ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
 
           ssh-keyscan -t ed25519 -p ${{ secrets.SERVER_PORT }} -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Test SSH login
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SERVER_PORT }} \
+            -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK && whoami && hostname"
 
       - name: Install rsync & ssh
         run: sudo apt-get update && sudo apt-get install -y rsync openssh-client
 
       - name: Deploy frontend dist
         run: |
+          DEPLOY_FRONTEND_DIR="$(printf '%s' "$DEPLOY_FRONTEND_DIR" | tr -d '\r\n')"
+          DEPLOY_FRONTEND_DIR="${DEPLOY_FRONTEND_DIR%/}"
+
+          if [ -z "$DEPLOY_FRONTEND_DIR" ] || [ "$DEPLOY_FRONTEND_DIR" = "/" ]; then
+            echo "ERROR: DEPLOY_FRONTEND_DIR is empty or '/'. Refusing to rsync."
+            exit 1
+          fi
+
           rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SERVER_PORT }}" \
             artifacts/frontend/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/novels/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_FRONTEND_DIR }}
 
       - name: Deploy backend (Docker context)
         run: |
@@ -110,7 +124,7 @@ jobs:
         run: |
           ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           set -e
-          cd /root/apps/backend/novels
+          cd /root/apps/novels/backend
           docker compose up -d --build
           docker ps --filter "name=novels-api"
           sudo systemctl reload nginx
