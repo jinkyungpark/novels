@@ -110,7 +110,7 @@ jobs:
         run: |
           ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
           set -e
-          cd /root/apps/novels/backend
+          cd /root/apps/backend/novels
           docker compose up -d --build
           docker ps --filter "name=novels-api"
           sudo systemctl reload nginx
