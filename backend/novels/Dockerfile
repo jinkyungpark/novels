@@ -4,12 +4,12 @@
 # 사용할 JDK 버전 지정
 FROM eclipse-temurin:17-jdk   
 
-# aws 서버 폴더명 지정
+# 서버 폴더명 지정
 WORKDIR /app
 
 # 필요 파일 복사(프로젝트 명으로 압축된 파일 app.jar 로 복사)
-# COPY build/libs/*.jar app.jar
-COPY target/*.jar app.jar
+# WORKDIR 을 지정했기 때문에 /app/app.jar 로 복사됨
+COPY app.jar app.jar
 
 # port 지정
 # EXPOSE 8080

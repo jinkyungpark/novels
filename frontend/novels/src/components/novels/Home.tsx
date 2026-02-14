@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useNovelList } from '../../hooks/useNovelList';
 import BasicLayout from '../../layout/BasicLayout';
 import { genres } from '../../utils/novelUtil';
-import NovelList from './NovelList';
-import { useNovelList } from '../../hooks/useNovelList';
-import Loading from '../common/Loading';
 import Error from '../common/Error';
-import { useSearchParams } from 'react-router-dom';
+import Loading from '../common/Loading';
+import NovelList from './NovelList';
 
 const Home = () => {
   // ? 로 처리되는 값 검색 파라미터

@@ -8,7 +8,7 @@ const NovelDetails = () => {
   // 주소줄에 있는 값 가져오기
   const { id } = useParams<{ id: string }>();
 
-  const { serverData, loading, error } = useNovel(id);
+  const { serverData, error } = useNovel(id);
   //if (loading) return <Loading />;
   if (error) return <Error />;
 

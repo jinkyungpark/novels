@@ -1,0 +1,105 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+# This workflow will build a Java project with Gradle and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-java-with-gradle
+
+name: Deploy Frontend + Backend (Docker)
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "novels/frontend/**"
+      - "novels/backend/**"
+      - ".github/workflows/deploy.yml"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ---------- Frontend (Vite) ----------
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: novels/frontend/package-lock.json
+
+      - name: Install frontend deps
+        working-directory: novels/frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: novels/frontend
+        run: npm run build
+
+      # ---------- Backend (Spring Boot) ----------
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: "gradle"
+
+      - name: Build backend (skip tests)
+        working-directory: novels/backend
+        run: ./gradlew clean build -x test
+
+      # ---------- Prepare artifacts ----------
+      - name: Prepare artifacts
+        run: |
+          mkdir -p artifacts/frontend artifacts/backend
+
+          # frontend dist
+          cp -r novels/frontend/dist/* artifacts/frontend/
+
+          # backend jar -> app.jar (plain.jar 제외)
+          JAR_PATH=$(ls novels/backend/build/libs/*.jar | grep -v -- '-plain\.jar' | head -n 1)
+          if [ -z "$JAR_PATH" ]; then
+            echo "No runnable jar found in novels/backend/build/libs"
+            ls -al novels/backend/build/libs || true
+            exit 1
+          fi
+          cp "$JAR_PATH" artifacts/backend/app.jar
+
+          cp novels/backend/Dockerfile artifacts/backend/Dockerfile
+          cp novels/backend/docker-compose.yml artifacts/backend/docker-compose.yml
+
+      # ---------- SSH + Rsync ----------
+      - name: Install rsync & ssh
+        run: sudo apt-get update && sudo apt-get install -y rsync openssh-client
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.GABIA_SSH }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -p ${{ secrets.SERVER_PORT }} -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy frontend dist
+        run: |
+          rsync -avz --delete -e "ssh -p ${{ secrets.SERVER_PORT }}" \
+            artifacts/frontend/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_FRONTEND_DIR }}/
+
+      - name: Deploy backend (Docker context)
+        run: |
+          rsync -avz -e "ssh -p ${{ secrets.SERVER_PORT }}" \
+            artifacts/backend/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_BACKEND_DIR }}/
+
+      - name: Rebuild & restart backend container
+        run: |
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          set -e
+          cd /root/apps/novels/backend
+          docker compose up -d --build
+          docker ps --filter "name=novels-api"
+          sudo systemctl reload nginx
+          EOF

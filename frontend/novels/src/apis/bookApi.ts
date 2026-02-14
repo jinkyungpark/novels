@@ -2,7 +2,9 @@ import axios from 'axios';
 import type { Novel, NovelPut, PageParam } from '../types/novel';
 import jwtAxios from '../utils/jwtUtil';
 
-export const API_SERVER_HOST = 'http://localhost:8080/api/novels';
+// export const API_SERVER_HOST = 'http://localhost:8080/api/novels';
+export const API_SERVER_HOST = '';
+export const NOVELS_API = `/api/novels`;
 
 // 전체 리스트 books 조회
 export const getList = async (pageParam: PageParam) => {

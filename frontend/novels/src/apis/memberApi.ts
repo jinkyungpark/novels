@@ -1,7 +1,9 @@
 import axios from 'axios';
 import type { LoginFormParam } from '../types/user';
 
-export const API_SERVER_HOST = 'http://localhost:8080/api/member';
+// export const API_SERVER_HOST = 'http://localhost:8080/api/member';
+export const API_SERVER_HOST = '';
+export const NOVELS_API = `/api/member`;
 
 // 전체 리스트 books 조회
 export const postLogin = async (loginParam: LoginFormParam) => {

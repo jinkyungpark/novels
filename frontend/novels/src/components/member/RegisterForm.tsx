@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const initState = {
   email: '',
@@ -8,14 +7,12 @@ const initState = {
 };
 
 const RegisterForm = () => {
-  // 회원가입 이동
-  const navigate = useNavigate();
 
   //화면단 데이터
   const [registerParam, setRegisterParam] = useState(initState);
   const { email, pw, nickname } = registerParam;
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setRegisterParam({
       ...registerParam,
       [e.target.name]: e.target.value,

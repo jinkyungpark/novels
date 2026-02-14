@@ -1,7 +1,6 @@
-import AddBook from '../pages/novels/AddNovel';
-import BookDetails from '../pages/novels/NovelDetails';
-import EditBook from '../pages/novels/EditNovel';
 import AddNovel from '../pages/novels/AddNovel';
+import EditBook from '../pages/novels/EditNovel';
+import BookDetails from '../pages/novels/NovelDetails';
 
 const novelRouter = () => {
   return [

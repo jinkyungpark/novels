@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { loginPostAsync } from '../../reducers/loginSlice';
-import type { AppDispatch } from '../../reducers/store';
 import useLogin from '../../hooks/useLogin';
 
 //import useCustomLogin from './../../hooks/useCustomLogin';

@@ -4,7 +4,6 @@ import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { postLogin } from '../apis/memberApi';
 import type { LoginFormParam, LoginResponse } from '../types/user';
 import { getCookie, removeCookie, setCookie } from '../utils/cookieUtils';
-import { MdEmail } from 'react-icons/md';
 
 // memberApi.js 의 로그인 포스트 호출
 // createAsyncThunk('loginPostAsync', 비동기처리할 함수)
@@ -78,11 +77,11 @@ export const loginSlice = createSlice({
         }
       })
       // 로그인 API 요청 시작
-      .addCase(loginPostAsync.pending, (state) => {
+      .addCase(loginPostAsync.pending, () => {
         console.log('pending');
       })
       // 로그인 실패
-      .addCase(loginPostAsync.rejected, (state, action) => {
+      .addCase(loginPostAsync.rejected, () => {
         console.log('rejected');
       });
   },
