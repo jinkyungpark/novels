@@ -77,7 +77,6 @@ jobs:
           cp backend/novels/docker-compose.yml artifacts/backend/docker-compose.yml
 
       # ---------- SSH + Rsync ----------
-
       - name: Install ssh + rsync
         run: sudo apt-get update && sudo apt-get install -y openssh-client rsync
 
@@ -90,15 +89,20 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          ssh -vvv -p ${{ secrets.SERVER_PORT }} \
+
+          ssh -p ${{ secrets.SERVER_PORT }} \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=accept-new \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK"
+            -o UserKnownHostsFile=~/.ssh/known_hosts \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+            "echo SSH_OK && whoami && hostname"
 
       - name: Deploy frontend dist
         env:
           DEPLOY_FRONTEND_DIR: ${{ secrets.DEPLOY_FRONTEND_DIR }}
         run: |
+          set -euo pipefail
+
           DEPLOY_FRONTEND_DIR="$(printf '%s' "$DEPLOY_FRONTEND_DIR" | tr -d '\r\n')"
           DEPLOY_FRONTEND_DIR="${DEPLOY_FRONTEND_DIR%/}"
 
@@ -108,7 +112,7 @@ jobs:
           fi
 
           rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SERVER_PORT }} -o StrictHostKeyChecking=yes" \
+            -e "ssh -p ${{ secrets.SERVER_PORT }} -o BatchMode=yes -o StrictHostKeyChecking=yes" \
             artifacts/frontend/ \
             "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${DEPLOY_FRONTEND_DIR}/"
 
