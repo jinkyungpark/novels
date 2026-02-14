@@ -126,11 +126,30 @@ jobs:
           # 5. 사용한 임시 키 삭제
           rm ./private_key
 
-      - name: Deploy backend (Docker context)
+      - name: Rebuild & restart backend container
         run: |
-          rsync -avz -e "ssh -p ${{ secrets.SERVER_PORT }}" \
-            artifacts/backend/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_BACKEND_DIR }}/
+          # 1. 키 파일 다시 생성 (앞선 스텝과 동일하게)
+          cat << 'EOF' > ./private_key
+          ${{ secrets.SERVER_SSH_RSA }}
+          EOF
+          chmod 600 ./private_key
+
+          # 2. SSH 접속 후 명령 실행
+          # -T 옵션을 추가하여 "Pseudo-terminal" 관련 경고를 방지합니다.
+          ssh -i ./private_key -o StrictHostKeyChecking=no -T deploy@${{ secrets.SERVER_HOST }} << 'EOF'
+            cd ${{ secrets.DEPLOY_BACKEND_DIR }}
+            
+            # 빌드 및 실행
+            docker compose up -d --build
+            
+            # 용량 관리
+            docker image prune -f
+            
+            # Nginx 설정 반영 (비밀번호 없이 실행 가능해짐)
+            sudo systemctl reload nginx
+          EOF
+
+          rm ./private_key
 
       - name: Docker Run
         run: |
