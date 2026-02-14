@@ -90,10 +90,10 @@ jobs:
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          ssh -p ${{ secrets.SERVER_PORT }} \
+          ssh -vvv -p ${{ secrets.SERVER_PORT }} \
             -o BatchMode=yes \
             -o StrictHostKeyChecking=accept-new \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK && whoami && hostname"
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK"
 
       - name: Deploy frontend dist
         env:
