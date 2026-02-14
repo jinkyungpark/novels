@@ -98,27 +98,27 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           chmod 700 ~/.ssh
 
-          - name: Deploy frontend dist
-          env:
-            SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_RSA }}
-          run: |
-            # 1. .ssh 디렉토리 생성 (없을 경우 대비)
-            mkdir -p ~/.ssh
-            
-            # 2. 임시 키 파일 생성 (쌍따옴표 필수! 개행 문자 보존)
-            printf "%s" "$SSH_PRIVATE_KEY" > private_key
-            chmod 600 private_key
+      - name: Deploy frontend dist
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_RSA }}
+        run: |
+          # 1. .ssh 디렉토리 생성 (없을 경우 대비)
+          mkdir -p ~/.ssh
 
-            # 3. 경로 정리
-            CLEAN_DIR=$(echo "${{ secrets.DEPLOY_FRONTEND_DIR }}" | tr -d '\r\n')
+          # 2. 임시 키 파일 생성 (쌍따옴표 필수! 개행 문자 보존)
+          printf "%s" "$SSH_PRIVATE_KEY" > private_key
+          chmod 600 private_key
 
-            # 4. rsync 실행 (-vv 옵션으로 상세 에러 확인)
-            rsync -avz --delete \
-              -e "ssh -p 22 -i ./private_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -vv" \
-              artifacts/frontend/ \
-              ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"$CLEAN_DIR/"
-            
-            rm private_key
+          # 3. 경로 정리
+          CLEAN_DIR=$(echo "${{ secrets.DEPLOY_FRONTEND_DIR }}" | tr -d '\r\n')
+
+          # 4. rsync 실행 (-vv 옵션으로 상세 에러 확인)
+          rsync -avz --delete \
+            -e "ssh -p 22 -i ./private_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -vv" \
+            artifacts/frontend/ \
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"$CLEAN_DIR/"
+
+          rm private_key
 
       - name: Deploy backend (Docker context)
         run: |
