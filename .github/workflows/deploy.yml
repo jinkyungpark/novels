@@ -47,6 +47,11 @@ jobs:
           java-version: "17"
           cache: "gradle"
 
+      # gradlew 실행 권한 부여
+      - name: Make gradlew executable
+        working-directory: backend/novels
+        run: chmod +x gradlew
+
       - name: Build backend (skip tests)
         working-directory: backend/novels
         run: ./gradlew clean build -x test
