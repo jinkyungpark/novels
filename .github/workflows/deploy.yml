@@ -86,7 +86,7 @@ jobs:
           mkdir -p ~/.ssh
 
           # 개인키 저장
-          printf '%s' "$SERVER_SSH_RSA" > ~/.ssh/id_rsa
+          printf '%s' "$SERVER_SSH_RSA_B64" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
           # ✅ 여기서 실패하면 "키 저장/형식" 문제
