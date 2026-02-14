@@ -1,0 +1,9 @@
+services:
+  api:
+    build: .
+    container_name: novels-api
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080" # 외부 공개 X, nginx만 접근
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
