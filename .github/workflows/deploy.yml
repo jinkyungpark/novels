@@ -29,10 +29,10 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: novels/frontend/package-lock.json
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install frontend deps
-        working-directory: novels/frontend
+        working-directory: frontend/novels
         run: npm ci
 
       - name: Build frontend
@@ -48,7 +48,7 @@ jobs:
           cache: "gradle"
 
       - name: Build backend (skip tests)
-        working-directory: novels/backend
+        working-directory: backend/novels
         run: ./gradlew clean build -x test
 
       # ---------- Prepare artifacts ----------
