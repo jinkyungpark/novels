@@ -98,24 +98,23 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           chmod 700 ~/.ssh
 
-      # - name: Test SSH (accept-new)
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     chmod 700 ~/.ssh
-
-      #     ssh -vvv -p ${{ secrets.SERVER_PORT }} \
-      #       -o BatchMode=yes \
-      #       -o StrictHostKeyChecking=accept-new \
-      #       -o UserKnownHostsFile=~/.ssh/known_hosts \
-      #       ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-      #       "echo SSH_OK"
-
       - name: Deploy frontend dist
+        env:
+          DEPLOY_FRONTEND_DIR: ${{ secrets.DEPLOY_FRONTEND_DIR }}
         run: |
+          # 1. 경로 정리 (공백 및 줄바꿈 제거)
+          CLEAN_DIR=$(echo "$DEPLOY_FRONTEND_DIR" | tr -d '\r\n' | sed 's|/*$||')
+
+          if [ -z "$CLEAN_DIR" ] || [ "$CLEAN_DIR" = "/" ]; then
+            echo "ERROR: DEPLOY_FRONTEND_DIR is empty or root."
+            exit 1
+          fi
+
+          # 2. rsync 실행 (따옴표와 백슬래시 주의)
           rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SERVER_PORT }} \
+            -e "ssh -p ${{ secrets.SERVER_PORT }} -o StrictHostKeyChecking=yes" \
             artifacts/frontend/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_FRONTEND_DIR }}/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"$CLEAN_DIR/"
 
       - name: Deploy backend (Docker context)
         run: |
