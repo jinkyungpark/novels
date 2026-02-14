@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: novels
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+
+logging:
+  level:
+    org:
+      hibernate:
+        SQL: debug
+        orm:
+          jdbc:
+      springframework:
+        security:
+          web: trace
