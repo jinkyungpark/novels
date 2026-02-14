@@ -11,8 +11,8 @@ on:
   push:
     branches: ["main"]
     paths:
-      - "novels/frontend/**"
-      - "novels/backend/**"
+      - "frontend/novels/**"
+      - "backend/novels/**"
       - ".github/workflows/deploy.yml"
 
 jobs:
@@ -33,11 +33,9 @@ jobs:
 
       - name: Install frontend deps
         working-directory: frontend/novels
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: frontend/novels
-        run: npm run build
+        run: |
+          npm ci
+          npm run build
 
       # ---------- Backend (Spring Boot) ----------
       - name: Setup Java
@@ -50,11 +48,9 @@ jobs:
       # gradlew 실행 권한 부여
       - name: Make gradlew executable
         working-directory: backend/novels
-        run: chmod +x gradlew
-
-      - name: Build backend (skip tests)
-        working-directory: backend/novels
-        run: ./gradlew clean build -x test
+        run: |
+          chmod +x gradlew
+          ./gradlew clean build -x test
 
       # ---------- Prepare artifacts ----------
       - name: Prepare artifacts
@@ -71,8 +67,8 @@ jobs:
             ls -al backend/novels/build/libs || true
             exit 1
           fi
-          cp "$JAR_PATH" artifacts/backend/app.jar
 
+          cp "$JAR_PATH" artifacts/backend/app.jar
           cp backend/novels/Dockerfile artifacts/backend/Dockerfile
           cp backend/novels/docker-compose.yml artifacts/backend/docker-compose.yml
 
@@ -86,36 +82,29 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_RSA }}
 
-      - name: Test SSH (accept-new)
+      # 호스트 키 등록록
+      - name: Add Remote Host to Known Hosts
         run: |
-          mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
+          ssh-keyscan -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
 
-          ssh -vvv -p ${{ secrets.SERVER_PORT }} \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=accept-new \
-            -o UserKnownHostsFile=~/.ssh/known_hosts \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
-            "echo SSH_OK"
+      # - name: Test SSH (accept-new)
+      #   run: |
+      #     mkdir -p ~/.ssh
+      #     chmod 700 ~/.ssh
+
+      #     ssh -vvv -p ${{ secrets.SERVER_PORT }} \
+      #       -o BatchMode=yes \
+      #       -o StrictHostKeyChecking=accept-new \
+      #       -o UserKnownHostsFile=~/.ssh/known_hosts \
+      #       ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} \
+      #       "echo SSH_OK"
 
       - name: Deploy frontend dist
-        env:
-          DEPLOY_FRONTEND_DIR: ${{ secrets.DEPLOY_FRONTEND_DIR }}
         run: |
-          set -euo pipefail
-
-          DEPLOY_FRONTEND_DIR="$(printf '%s' "$DEPLOY_FRONTEND_DIR" | tr -d '\r\n')"
-          DEPLOY_FRONTEND_DIR="${DEPLOY_FRONTEND_DIR%/}"
-
-          if [ -z "$DEPLOY_FRONTEND_DIR" ] || [ "$DEPLOY_FRONTEND_DIR" = "/" ]; then
-            echo "ERROR: DEPLOY_FRONTEND_DIR is empty or '/'. Refusing to rsync."
-            exit 1
-          fi
-
           rsync -avz --delete \
-            -e "ssh -p ${{ secrets.SERVER_PORT }} -o BatchMode=yes -o StrictHostKeyChecking=yes" \
+            -e "ssh -p ${{ secrets.SERVER_PORT }} \
             artifacts/frontend/ \
-            "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${DEPLOY_FRONTEND_DIR}/"
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_FRONTEND_DIR }}/
 
       - name: Deploy backend (Docker context)
         run: |
@@ -123,12 +112,11 @@ jobs:
             artifacts/backend/ \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_BACKEND_DIR }}/
 
-      - name: Rebuild & restart backend container
+      - name: Docker Run
         run: |
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
-          set -e
-          cd /root/apps/novels/backend
+          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
+          cd ${{ secrets.DEPLOY_BACKEND_DIR }}
           docker compose up -d --build
-          docker ps --filter "name=novels-api"
+          docker image prune -f  # 사용하지 않는 옛날 이미지 삭제 (용량 관리)
           sudo systemctl reload nginx
           EOF
