@@ -86,16 +86,10 @@ jobs:
           echo "${{ secrets.SERVER_SSH_B64 }}" | base64 -d > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          # 키가 정상인지 여기서 검증 (여기서 libcrypto면 아직 깨진 것)
+          # 키가 정상인지 검증 
           ssh-keygen -y -f ~/.ssh/id_ed25519 > /dev/null
 
           ssh-keyscan -t ed25519 -p ${{ secrets.SERVER_PORT }} -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
-
-      - name: Test SSH login
-        run: |
-          ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SERVER_PORT }} \
-            -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK && whoami && hostname"
 
       - name: Install rsync & ssh
         run: sudo apt-get update && sudo apt-get install -y rsync openssh-client
@@ -104,7 +98,7 @@ jobs:
         run: |
           rsync -avz --delete -e "ssh -i ~/.ssh/id_ed25519 -p ${{ secrets.SERVER_PORT }}" \
             artifacts/frontend/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:${{ secrets.DEPLOY_FRONTEND_DIR }}/
+            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/var/www/novels/
 
       - name: Deploy backend (Docker context)
         run: |
