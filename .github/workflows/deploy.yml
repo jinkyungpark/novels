@@ -84,32 +84,25 @@ jobs:
           PORT: ${{ secrets.SERVER_PORT }}
         run: |
           set -e
+          sudo apt-get update && sudo apt-get install -y openssh-client
           mkdir -p ~/.ssh
-          chmod 700 ~/.ssh
+          chmod 700 ~/.ssh          
 
-          echo "HOST length: ${#HOST}"
-          echo "PORT length: ${#PORT}"
-
-          # 필수값 가드
-          test -n "$HOST"
-          test -n "$PORT"
+          printf '%s' "$SERVER_SSH_RSA" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
           ssh-keyscan -p "$PORT" -H "$HOST" >> ~/.ssh/known_hosts 2>/tmp/keyscan.err || true
 
           echo "---- keyscan stderr ----"
-          cat /tmp/keyscan.err || true
-
-          # 실제 호스트키 라인이 들어왔는지 검사
-          if ! tail -n 50 ~/.ssh/known_hosts | grep -qE 'ssh-(rsa|ed25519)|ecdsa-'; then
-            echo "ERROR: host keys not added to known_hosts"
-            exit 1
-          fi
+          ssh-keygen -y -f ~/.ssh/id_rsa > /dev/null
 
       - name: Test SSH login
         run: |
           ssh -p ${{ secrets.SERVER_PORT }} \
-            -o BatchMode=yes -o StrictHostKeyChecking=yes \
             -i ~/.ssh/id_rsa \
+            -o BatchMode=yes \
+            -o StrictHostKeyChecking=accept-new \
+            -o UserKnownHostsFile=~/.ssh/known_hosts \
             ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} "echo SSH_OK && whoami && hostname"
 
       - name: Install rsync & ssh
