@@ -62,13 +62,13 @@ jobs:
           mkdir -p artifacts/frontend artifacts/backend
 
           # frontend dist
-          cp -r novels/frontend/dist/* artifacts/frontend/
+          cp -r frontend/novels/dist/* artifacts/frontend/
 
           # backend jar -> app.jar (plain.jar 제외)
-          JAR_PATH=$(ls novels/backend/build/libs/*.jar | grep -v -- '-plain\.jar' | head -n 1)
+          JAR_PATH=$(ls backend/novels/build/libs/*.jar | grep -v -- '-plain\.jar' | head -n 1)
           if [ -z "$JAR_PATH" ]; then
             echo "No runnable jar found in novels/backend/build/libs"
-            ls -al novels/backend/build/libs || true
+            ls -al backend/novels/build/libs || true
             exit 1
           fi
           cp "$JAR_PATH" artifacts/backend/app.jar
