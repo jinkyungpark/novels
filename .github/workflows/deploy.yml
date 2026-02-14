@@ -140,8 +140,7 @@ jobs:
             cd ${{ secrets.DEPLOY_BACKEND_DIR }}
             
             # 빌드 및 실행
-            docker compose up -d --build
-            
+            docker compose up -d --build            
             # 용량 관리
             docker image prune -f
             
