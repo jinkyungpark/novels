@@ -20,6 +20,6 @@ export const postLogin = async (loginParam: LoginFormParam) => {
   form.append('password', loginParam.pw);
 
   // SecurityConfig 에 설정
-  const res = await axios.post(`${API_SERVER_HOST}/login`, form, header);
+  const res = await axios.post(`${API_SERVER_HOST}${NOVELS_API}/login`, form, header);
   return res.data;
 };
