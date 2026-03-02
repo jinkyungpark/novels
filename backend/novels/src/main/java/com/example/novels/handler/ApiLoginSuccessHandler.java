@@ -34,7 +34,7 @@ public class ApiLoginSuccessHandler implements AuthenticationSuccessHandler {
         Map<String, Object> claims = authUserDTO.getClaims();
 
         // 토큰 생성
-        String accessTocken = JWTUtil.generateToken(claims, 10); // 10분
+        String accessTocken = JWTUtil.generateToken(claims, 60); // 10분
         String refreshToken = JWTUtil.generateToken(claims, 60 * 10); // 24시간
 
         claims.put("accessToken", accessTocken); // 나중에 구현

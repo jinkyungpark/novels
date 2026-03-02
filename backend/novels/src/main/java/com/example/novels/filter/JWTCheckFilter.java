@@ -36,7 +36,8 @@ public class JWTCheckFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         log.info("check uri " + path);
 
-        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/api/member"))
+        if (path.startsWith("/swagger-ui") || path.startsWith("/v3/api-docs") || path.startsWith("/api/member/login")
+                || path.startsWith("/api/member/register"))
             // /api/member/ 경로의 호출은 체크하지 않음
             return true;
 

@@ -42,6 +42,7 @@ public class SecurityConfig {
 
                 http.authorizeHttpRequests(auth -> auth
                                 .requestMatchers(HttpMethod.GET, "/api/novels/**").permitAll()
+                                .requestMatchers(HttpMethod.POST, "/api/member/register").permitAll()
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 .anyRequest().authenticated());
 
@@ -55,7 +56,8 @@ public class SecurityConfig {
 
                 // // 로그인
                 http.formLogin(config -> {
-                        config.loginPage("/api/member/login");
+                        config.loginProcessingUrl("/api/member/login");
+                        // config.loginPage("/api/member/login");
                         config.successHandler(new ApiLoginSuccessHandler());
                         config.failureHandler(new ApiLoginFailHandler());
                 });

@@ -1,6 +1,7 @@
 package com.example.novels.entity;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -46,6 +47,20 @@ public class Novel extends BaseEntity {
 	@JoinColumn(name = "GENRE_ID")
 	private Genre genre;
 
+	@Column(nullable = false, length = 2000)
+	private String synopsi;
+
+	// ai 소개문 작성
+	@Column(columnDefinition = "TEXT")
+	private String aiDescription;
+	// 소개문 작성 날짜
+	private LocalDateTime aiDescriptionUpdatedAt;
+
+	public void changeAiDescription(String aiDescription) {
+		this.aiDescription = aiDescription;
+		this.aiDescriptionUpdatedAt = LocalDateTime.now();
+	}
+
 	public void changeAvailable(boolean available) {
 		this.available = available;
 	}
@@ -53,4 +68,9 @@ public class Novel extends BaseEntity {
 	public void changeGenre(Genre genre) {
 		this.genre = genre;
 	}
+
+	public void changeSynopsi(String synopsi) {
+		this.synopsi = synopsi;
+	}
+
 }

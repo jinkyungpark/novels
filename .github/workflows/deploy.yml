@@ -156,5 +156,6 @@ jobs:
           cd ${{ secrets.DEPLOY_BACKEND_DIR }}
           docker compose up -d --build
           docker image prune -f  # 사용하지 않는 옛날 이미지 삭제 (용량 관리)
+          # deploy 가 이작업을 해야 하기 때문에 앞에서 권한 설정한 것
           sudo systemctl reload nginx
           EOF

@@ -14,6 +14,8 @@ const Home = () => {
   const keyword = params.get("keyword") ?? "";
   const currentPage = Number(params.get("page") ?? 0);
 
+  console.log("현재 페이지 ", currentPage);
+
   const { serverData, loading, error, toggleAvailable } = useNovelList(
     currentPage,
     10,

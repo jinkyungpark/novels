@@ -5,8 +5,8 @@ import { initialPageState, type Novel, type PageResult } from '../types/novel';
 // 커스텀 훅으로 작성한 이유는 재사용성을 위해서
 
 export const useNovelList = (
-  page: number,
-  size: number,
+  page: number = 0,
+  size: number = 10,
   genre: number,
   keyword: string,
 ) => {
@@ -14,10 +14,10 @@ export const useNovelList = (
     useState<PageResult<Novel>>(initialPageState);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  page = page + 1; // 서버와 안 맞기 때문에
 
   const fetchData = useCallback(async () => {
     console.log('검색 ', genre, keyword);
-    page = page + 1; // 서버와 안 맞기 때문에
     try {
       setLoading(true);
       const data = await getList({ page, size, genre, keyword });

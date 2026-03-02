@@ -1,6 +1,7 @@
 package com.example.novels.dto;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import org.springframework.data.repository.query.Param;
 
@@ -25,6 +26,7 @@ public class NovelDTO {
     private String author; // 저자
     private LocalDate publishedDate; // 출판일
     private boolean available;
+    private String synopsi;
 
     @JsonProperty("genre")
     private Long gid; // 장르아이디
@@ -34,4 +36,9 @@ public class NovelDTO {
 
     // user 정보
     private String email;
+
+    // ai 소개문
+    private String aiDescription;
+    // 소개문 작성 날짜
+    private LocalDateTime aiDescriptionUpdatedAt;
 }

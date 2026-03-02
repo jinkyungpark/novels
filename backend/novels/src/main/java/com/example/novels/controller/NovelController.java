@@ -1,14 +1,21 @@
 package com.example.novels.controller;
 
+import com.example.novels.ai.NovelAiEnrichmentService;
+import com.example.novels.ai.SimilarFilter;
+import com.example.novels.ai.SimilarNovelResponse;
+import com.example.novels.dto.AiDescriptionResponse;
 import com.example.novels.dto.NovelDTO;
 import com.example.novels.dto.PageRequestDTO;
 import com.example.novels.dto.PageResultDTO;
+import com.example.novels.entity.Novel;
 import com.example.novels.service.NovelService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+
+import java.util.List;
 
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -17,6 +24,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.PutMapping;
 
@@ -28,6 +36,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 public class NovelController {
 
     private final NovelService novelService;
+    private final NovelAiEnrichmentService novelAiEnrichmentService;
 
     @Operation(summary = "novel 전체 조회", description = "novel 전체 조회 API")
     @GetMapping("")
@@ -44,9 +53,17 @@ public class NovelController {
         return novelService.getRow(id);
     }
 
+    @Operation(summary = "ai 소개글 생성", description = "ai 소개글 생성 API")
+    @GetMapping("/{id}/ai-description")
+    public AiDescriptionResponse createAiDescription(@PathVariable Long id,
+            @RequestParam(defaultValue = "false") boolean force) {
+        log.info("ai 소개글 {} {}", id, force);
+        return novelService.getAiDescription(id, force);
+    }
+
     // /api/books/add
     @Operation(summary = "novel 추가", description = "novel 추가 조회 API")
-    @PreAuthorize("hasAnyRole('ROLE_USER','ROLE_ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PostMapping("/add")
     public Long postBook(@RequestBody NovelDTO novelDTO) {
         log.info("insert {}", novelDTO);
