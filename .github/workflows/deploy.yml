@@ -91,7 +91,7 @@ jobs:
 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s' "$KEY" > ~/.ssh/id_deploy
+          printf '%s' "$KEY" | tr -d '\r' > ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
 
           # host key 등록(StrictHostKeyChecking=yes로 쓰려면 필요)
