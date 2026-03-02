@@ -7,8 +7,8 @@ services:
       - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_DATABASE: appdb
+      MYSQL_USER: appuser
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       TZ: "Asia/Seoul"
     volumes:
@@ -34,8 +34,8 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=utf8
-      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/appdb?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: appuser
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
 
