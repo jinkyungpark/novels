@@ -82,7 +82,6 @@ jobs:
           HOST: ${{ secrets.SERVER_HOST }}
           PORT: ${{ secrets.SERVER_PORT }}
           USER: ${{ secrets.SERVER_USER }}
-          KEY: ${{ secrets.SERVER_SSH_RSA }}
           FE_DIR: ${{ secrets.DEPLOY_FRONTEND_DIR }}
           BE_DIR: ${{ secrets.DEPLOY_BACKEND_DIR }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -90,13 +89,13 @@ jobs:
           # 1. SSH 키 설정
           mkdir -p ~/.ssh
           cat << 'EOF' > ./private_key
-          $KEY
+          ${{ secrets.SERVER_SSH_RSA }}
           EOF
           chmod 600 ./private_key
 
           # 2. 공통 SSH 옵션 설정 (재사용을 위한 소켓 설정 포함)
           # ControlMaster를 쓰면 첫 연결 이후는 세션 생성이 생략되어 매우 빠릅니다.
-          SSH_OPTS="-i ./private_key -o StrictHostKeyChecking=no -o ControlMaster=auto -o ControlPath=~/.ssh/cm-%r@%h:%p -o ControlPersist=60s"
+          SSH_OPTS="-p $PORT -i ./private_key -o StrictHostKeyChecking=no -o ControlMaster=auto -o ControlPath=~/.ssh/cm-%r@%h:%p -o ControlPersist=60s"
 
           # 3. 데이터 전송 (rsync 연달아 실행)
           echo ">>> 전송 시작: Frontend"
