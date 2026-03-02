@@ -1,8 +1,2 @@
-spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://db:3306/appdb
-    username: appuser
-    password: t356#1
 server:
   forward-headers-strategy: framework

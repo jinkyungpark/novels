@@ -1,4 +1,30 @@
 services:
+  mysql:
+    image: mysql:8.0
+    container_name: novels-mysql
+    restart: unless-stopped
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      TZ: "Asia/Seoul"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    expose:
+      - "3306"
+    command: >
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_0900_ai_ci
+      --default-time-zone=+09:00
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-pChangeMeRootPW!"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
   api:
     build: .
     container_name: novels-api
@@ -8,3 +34,10 @@ services:
     environment:
       SPRING_PROFILES_ACTIVE: prod
       OPENAI_API_KEY: ${OPENAI_API_KEY}
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE}?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=utf8
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+
+volumes:
+  mysql_data:
