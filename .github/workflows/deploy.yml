@@ -31,7 +31,7 @@ jobs:
           cache: "npm"
           cache-dependency-path: "**/package-lock.json"
 
-      - name: Install frontend deps
+      - name: Build frontend
         working-directory: frontend/novels
         run: |
           npm ci
@@ -46,7 +46,7 @@ jobs:
           cache: "gradle"
 
       # gradlew 실행 권한 부여
-      - name: Make gradlew executable
+      - name: Build backend
         working-directory: backend/novels
         run: |
           chmod +x gradlew
@@ -55,6 +55,7 @@ jobs:
       # ---------- Prepare artifacts ----------
       - name: Prepare artifacts
         run: |
+          set -e  # 에러 발생 시 즉시 종료
           mkdir -p artifacts/frontend artifacts/backend
 
           # frontend dist
@@ -72,96 +73,54 @@ jobs:
           cp backend/novels/Dockerfile artifacts/backend/Dockerfile
           cp backend/novels/docker-compose.yml artifacts/backend/docker-compose.yml
 
-      # ---------- SSH + Rsync ----------
+      # ---------- Deploy ----------
 
-      - name: Install ssh + rsync
-        run: sudo apt-get update && sudo apt-get install -y openssh-client rsync
-
-      - name: Start ssh-agent and add key
-        uses: webfactory/ssh-agent@v0.9.0
-        with:
-          ssh-private-key: ${{ secrets.SERVER_SSH_RSA }}
-
-      # 호스트 키 등록
-      - name: Add Remote Host to Known Hosts
-        run: |
-          # 1. .ssh 디렉토리가 없으면 생성 (이미 있으면 무시)
-          mkdir -p ~/.ssh
-
-          # 2. 알려진 호스트 파일이 없으면 생성 및 권한 설정
-          touch ~/.ssh/known_hosts
-
-          # 3. ssh-keyscan 실행 
-          ssh-keyscan -p ${{ secrets.SERVER_PORT }} -t rsa ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts || true
-
-          # 4. 권한 보안 설정
-          chmod 600 ~/.ssh/known_hosts
-          chmod 700 ~/.ssh
-
-      - name: Deploy frontend dist
+      - name: Deploy (single SSH connection)
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SERVER_SSH_RSA }}
-          DEPLOY_DIR: ${{ secrets.DEPLOY_FRONTEND_DIR }}
+          HOST: ${{ secrets.SERVER_HOST }}
+          PORT: ${{ secrets.SERVER_PORT }}
+          USER: ${{ secrets.SERVER_USER }}
+          KEY: ${{ secrets.SERVER_SSH_RSA }}
+          FE_DIR: ${{ secrets.DEPLOY_FRONTEND_DIR }}
+          BE_DIR: ${{ secrets.DEPLOY_BACKEND_DIR }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          # 1. SSH 디렉토리 준비
+          set -euo pipefail
+
           mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s' "$KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
 
-          # 2. 개인키 복원 (가장 안전한 Heredoc 방식)
-          cat << 'EOF' > ./private_key
-          ${{ secrets.SERVER_SSH_RSA }}
-          EOF
+          # host key 등록(StrictHostKeyChecking=yes로 쓰려면 필요)
+          ssh-keyscan -p "$PORT" -t rsa "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          chmod 600 ~/.ssh/known_hosts
 
-          chmod 600 ./private_key
+          # 멀티플렉싱 소켓 경로
+          SOCK=~/.ssh/cm-%r@%h:%p
 
-          # 3. 경로 정리 (혹시 모를 공백 제거)
-          CLEAN_DIR=$(echo "$DEPLOY_DIR" | tr -d '\r\n')
+          # 공통 SSH 옵션(= 별칭 없이 사용)
+          SSH_OPTS="-p $PORT -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts -o ControlMaster=auto -o ControlPersist=10m -o ControlPath=$SOCK"
 
-          # 4. rsync 실행
-          # 로컬에서 접속 성공한 환경과 동일하게 ED25519 키를 사용합니다.
-          rsync -avz --delete \
-            -e "ssh -p 22 -i ./private_key -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
-            artifacts/frontend/ \
-            ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:"$CLEAN_DIR/"
+          # 마스터 연결 1번 생성
+          ssh $SSH_OPTS -MNf "$USER@$HOST"
 
-          # 5. 사용한 임시 키 삭제
-          rm ./private_key
+          # rsync 2번(하지만 실제 연결은 마스터 재사용)
+          rsync -az --delete -e "ssh $SSH_OPTS" artifacts/frontend/ "$USER@$HOST:$FE_DIR/"
+          rsync -az --delete -e "ssh $SSH_OPTS" artifacts/backend/  "$USER@$HOST:$BE_DIR/"
 
-      - name: Rebuild & restart backend container
-        run: |
-          # 1. 키 파일 다시 생성 (앞선 스텝과 동일하게)
-          cat << 'EOF' > ./private_key
-          ${{ secrets.SERVER_SSH_RSA }}
-          EOF
-          chmod 600 ./private_key
-
-          # 2. SSH 접속 후 명령 실행
-          # -T 옵션을 추가하여 "Pseudo-terminal" 관련 경고를 방지합니다.
-          ssh -i ./private_key -o StrictHostKeyChecking=no -T deploy@${{ secrets.SERVER_HOST }} << 'EOF'
-            cd ${{ secrets.DEPLOY_BACKEND_DIR }}           
-
-            # .env 파일 갱신
-            cat > .env << 'ENVEOF'
-            OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-            ENVEOF
-            chmod 600 .env  # 접근권한 설정
-            
-            # 빌드 및 실행
-            docker compose up -d --build            
-            # 용량 관리
+          # 원격 배포(동일 마스터 재사용)
+          ssh $SSH_OPTS "$USER@$HOST" "bash -lc '
+            set -e
+            cd \"$BE_DIR\"
+            cat > .env <<EOF
+            OPENAI_API_KEY=$OPENAI_API_KEY
+            EOF
+            chmod 600 .env
+            docker compose up -d --build
             docker image prune -f
-            
-            # Nginx 설정 반영 (비밀번호 없이 실행 가능해짐)
             sudo systemctl reload nginx
-          EOF
+          '"
 
-          rm ./private_key
-
-      - name: Docker Run
-        run: |
-          ssh -p ${{ secrets.SERVER_PORT }} ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << EOF
-          cd ${{ secrets.DEPLOY_BACKEND_DIR }}
-          docker compose up -d --build
-          docker image prune -f  # 사용하지 않는 옛날 이미지 삭제 (용량 관리)
-          # deploy 가 이작업을 해야 하기 때문에 앞에서 권한 설정한 것
-          sudo systemctl reload nginx
-          EOF
+          # 마스터 연결 종료
+          ssh $SSH_OPTS -O exit "$USER@$HOST"
