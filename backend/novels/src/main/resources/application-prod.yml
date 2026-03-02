@@ -1,2 +1,6 @@
 server:
   forward-headers-strategy: framework
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
