@@ -14,5 +14,5 @@ COPY app.jar app.jar
 # port 지정
 # EXPOSE 8080
 
-# 실행 명령 정의(EC2 안에서 했던 java -jar app.jar)
+# 실행 명령 정의
 ENTRYPOINT ["java","-jar","app.jar"]
