@@ -95,7 +95,7 @@ jobs:
           chmod 600 ./private_key
 
           # 2. 공통 SSH 옵션 설정 (재사용을 위한 소켓 설정 포함)
-          # ControlMaster를 쓰면 첫 연결 이후는 세션 생성이 생략되어 매우 빠릅니다.
+          # ControlMaster를 쓰면 첫 연결 이후는 세션 생성 생략 가능 (속도 개선)
           SSH_OPTS="-p $PORT -i ./private_key -o StrictHostKeyChecking=no -o ControlMaster=auto -o ControlPath=~/.ssh/cm-%r@%h:%p -o ControlPersist=60s"
 
           # 3. 데이터 전송 (rsync 연달아 실행)
