@@ -95,7 +95,7 @@ jobs:
           chmod 600 ~/.ssh/id_deploy
 
           # host key 등록(StrictHostKeyChecking=yes로 쓰려면 필요)
-          ssh-keyscan -p "$PORT" -t rsa "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh-keyscan -p "$PORT" -t rsa "$HOST" >> ~/.ssh/known_hosts || true
           chmod 600 ~/.ssh/known_hosts
 
           # 멀티플렉싱 소켓 경로
