@@ -1,5 +1,5 @@
 services:
-  mysql:
+  db:
     image: mysql:8.0
     container_name: novels-mysql
     restart: unless-stopped
