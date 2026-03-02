@@ -111,9 +111,13 @@ jobs:
             cd $BE_DIR
 
             # .env 파일 갱신 (비밀번호/키 주입)
-            echo \"OPENAI_API_KEY=$OPENAI_API_KEY\" > .env
-            echo \"MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD\" > .env         
-            echo \"MYSQL_PASSWORD=$MYSQL_PASSWORD\" > .env
+            cat <<EOF > .env
+            OPENAI_API_KEY=$OPENAI_API_KEY
+            MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+            MYSQL_PASSWORD=$MYSQL_PASSWORD
+            MYSQL_DATABASE=appdb
+            MYSQL_USER=appuser
+            EOF
             chmod 600 .env
             
             # 컨테이너 갱신
