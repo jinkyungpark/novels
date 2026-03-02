@@ -91,23 +91,27 @@ jobs:
 
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          printf '%s' "$KEY" | tr -d '\r' > ~/.ssh/id_deploy
+
+          cat << 'EOF' > ~/.ssh/id_deploy
+          $KEY
+          EOF
+
+          # 마지막 줄바꿈 강제 추가 및 권한 설정
+          echo "" >> ~/.ssh/id_deploy
           chmod 600 ~/.ssh/id_deploy
 
-          # host key 등록(StrictHostKeyChecking=yes로 쓰려면 필요)
-          ssh-keyscan -p "$PORT" -t rsa "$HOST" >> ~/.ssh/known_hosts || true
-          chmod 600 ~/.ssh/known_hosts
+          # 2. 호스트 키 등록
+          ssh-keyscan -p "$PORT" -t rsa,ed25519 "$HOST" >> ~/.ssh/known_hosts || true
+          chmod 644 ~/.ssh/known_hosts
 
-          # 멀티플렉싱 소켓 경로
-          SOCK=~/.ssh/cm-%r@%h:%p
+          # 3. SSH 옵션 최적화
+          # -o PubkeyAcceptedAlgorithms=+ssh-rsa 추가 (구형 키 대응)
+          SSH_OPTS="-p $PORT -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o PubkeyAcceptedAlgorithms=+ssh-rsa -o ControlMaster=auto -o ControlPersist=10m -o ControlPath=~/.ssh/cm-%r@%h:%p"
 
-          # 공통 SSH 옵션(= 별칭 없이 사용)
-          SSH_OPTS="-p $PORT -i ~/.ssh/id_deploy -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=~/.ssh/known_hosts -o ControlMaster=auto -o ControlPersist=10m -o ControlPath=$SOCK"
-
-          # 마스터 연결 1번 생성
+          # 4. 마스터 연결 생성
           ssh $SSH_OPTS -MNf "$USER@$HOST"
 
-          # rsync 2번(하지만 실제 연결은 마스터 재사용)
+          # 5. 파일 동기화
           rsync -az --delete -e "ssh $SSH_OPTS" artifacts/frontend/ "$USER@$HOST:$FE_DIR/"
           rsync -az --delete -e "ssh $SSH_OPTS" artifacts/backend/  "$USER@$HOST:$BE_DIR/"
 
