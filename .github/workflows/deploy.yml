@@ -84,7 +84,6 @@ jobs:
           USER: ${{ secrets.SERVER_USER }}
           FE_DIR: ${{ secrets.DEPLOY_FRONTEND_DIR }}
           BE_DIR: ${{ secrets.DEPLOY_BACKEND_DIR }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           # 1. SSH 키 설정
           mkdir -p ~/.ssh
@@ -110,15 +109,9 @@ jobs:
           ssh $SSH_OPTS $USER@$HOST "bash -lc '
             cd $BE_DIR
 
-            # .env 파일 갱신 (비밀번호/키 주입)
-            cat <<EOF > .env
-            OPENAI_API_KEY=$OPENAI_API_KEY
-            MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
-            MYSQL_PASSWORD=$MYSQL_PASSWORD
-            MYSQL_DATABASE=appdb
-            MYSQL_USER=appuser
-            EOF
-            chmod 600 .env
+            export OPENAI_API_KEY=\"${{ secrets.OPENAI_API_KEY }}\"
+            export MYSQL_ROOT_PASSWORD=\"${{ secrets.MYSQL_ROOT_PASSWORD }}\"
+            export MYSQL_PASSWORD=\"${{ secrets.MYSQL_PASSWORD }}\"
             
             # 컨테이너 갱신
             docker compose up -d --build

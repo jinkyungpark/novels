@@ -20,7 +20,7 @@ services:
       --collation-server=utf8mb4_0900_ai_ci
       --default-time-zone=+09:00
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p3aA87!"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD --silent"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -29,6 +29,9 @@ services:
     build: .
     container_name: novels-api
     restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8080:8080" # 외부 공개 X, nginx만 접근
     environment:
